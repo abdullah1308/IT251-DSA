@@ -20,73 +20,72 @@ def insert(root, s):
 
 # Below lists detail all eight possible movements from a cell
 # (top, right, bottom, left, and four diagonal moves)
-row = [-1, -1, -1, 0, 1, 0, 1, 1]
-col = [-1, 1, 0, -1, -1, 1, 0, 1]
+rowDir = [-1, -1, -1, 0, 1, 0, 1, 1]
+colDir = [-1, 1, 0, -1, -1, 1, 0, 1]
 
 
-# The function returns false if (x, y) is not valid matrix coordinates
-# or cell (x, y) is already processed or doesn't lead to the solution
-def isSafe(x, y, processed, board, ch):
-    return (0 <= x < len(processed)) and (0 <= y < len(processed[0])) and \
-           not processed[x][y] and (board[x][y] == ch)
+# This function searches in all 8-direction from point(row, col) in grid[][]
+def search2D(trie, grid, row, col, set):
+    R = len(grid)
+    C = len(grid[0])
+
+    if grid[row][col] not in trie.character:
+        return set
+
+    # Search word in all 8 directions
+    # starting from (row, col)
+    for idx in range(len(rowDir)):
+
+        x = rowDir[idx]
+        y = colDir[idx]
+
+        ch = grid[row][col]
+        current = trie
+
+        # Initialize  point
+        # for current direction
+        rd, cd = row + x, col + y
+        flag = True
+
+        while not current.isLeaf:
+            if 0 <= rd < R and 0 <= cd < C and grid[rd][cd] in current.character:
+                current = current.character[grid[rd][cd]]
+                ch += grid[rd][cd]
+                rd += x
+                cd += y
+
+            else:
+                flag = False
+                break
+
+        print(set)
+
+        if current.isLeaf and flag:
+            set.add(ch)
+
+    return set
 
 
-# A recursive function to search valid words present in a matrix using trie
-def searchMatrix(root, board, i, j, processed, path, result):
-    # if a leaf node is encountered
-    if root.isLeaf:
-        # update result with the current word
-        result.add(path)
-
-    # mark the current cell as processed
-    processed[i][j] = True
-
-    # traverse all children of the current Trie node
-    for key, value in root.character.items():
-
-        # check for all eight possible movements from the current cell
-        for k in range(len(row)):
-
-            # skip if a cell is invalid, or it is already processed
-            # or doesn't lead to any path in the Trie
-            if isSafe(i + row[k], j + col[k], processed, board, key):
-                searchMatrix(value, board, i + row[k], j + col[k],
-                             processed, path + key, result)
-
-    # backtrack: mark the current cell as unprocessed
-    processed[i][j] = False
-
-
-# Function to search for a given set of words in a matrix
-def searchInMatrix(board, words):
-    # construct a set for storing the result
-    result = set()
-
-    # base case
-    if not board or not len(board):
-        return
+# Searches given word in a given matrix
+# in all 8 directions
+def patternSearch(dictionary, grid):
+    # Rows and columns in given grid
+    R = len(grid)
+    C = len(grid[0])
 
     # insert all words into a trie
-    root = Trie()
-    for word in words:
-        insert(root, word)
+    trie = Trie()
+    for word in dictionary:
+        insert(trie, word)
 
-    # `M × N` board
-    (M, N) = (len(board), len(board[0]))
+    result = set()
 
-    # construct a matrix to store whether a cell is processed or not
-    processed = [[False for x in range(N)] for y in range(M)]
+    # Consider every point as starting point
+    # and search given word
+    for row in range(R):
+        for col in range(C):
+            result.union(search2D(trie, grid, row, col, result))
 
-    # consider each character in the matrix
-    for i in range(M):
-        for j in range(N):
-            ch = board[i][j]  # current character
-
-            # proceed only if the current character is a child of the Trie root node
-            if ch in root.character:
-                searchMatrix(root.character[ch], board, i, j, processed, ch, result)
-
-    # return the result set
     return result
 
 
@@ -112,15 +111,20 @@ def main():
     # for word in dictionary:
     #     print(word)
 
-    validWords = searchInMatrix(matrix, dictionary)
-    res = []
-    for word in validWords:
-        res.append(word)
+    resultSet = patternSearch(dictionary, matrix)
+    result = []
 
-    res.sort()
+    for word in resultSet:
+        result.append(word)
 
-    for word in res:
+    result.sort()
+
+    # print("Here")
+
+    for word in result:
         print(word)
+
+
 
 
 if __name__ == '__main__':
